@@ -17,15 +17,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
           cache: pnpm
       - run: node -e "if(process.env.GITHUB_REF_NAME !== 'v'+JSON.parse(require('fs').readFileSync('package.json')).version) process.exit(1)"
       - run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - uses: actions/cache@v4
+        with:
+          path: .toolchain/emsdk
+          key: emsdk-${{ runner.os }}-e566f7bdcc7735f44037911c24b87a58a3c93145-4.0.10
+      - uses: actions/cache@v4
+        with:
+          path: vendor/*.tar.gz
+          key: vendor-${{ hashFiles('sources.lock.json') }}
       - run: bash scripts/bootstrap.sh
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
-      - run: pnpm size
-      - run: npm publish --provenance --access public
+      - run: pnpm typecheck
+      - run: pnpm test:browser
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          BROWSER_EXECUTABLE: /usr/bin/google-chrome
+      - run: pnpm size
+      # Owner publishes 0.1.0 manually before configuring trusted publishing on npmjs.com.
+      - run: npm install --global npm@11.5.1
+      - run: npm publish --provenance --access public

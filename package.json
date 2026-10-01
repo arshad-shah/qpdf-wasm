@@ -11,7 +11,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./qpdf.wasm": "./dist/qpdf.wasm"
   },
@@ -28,7 +29,8 @@
     "build": "pnpm build:wasm && pnpm build:ts",
     "test": "vitest run",
     "test:browser": "node scripts/browser-smoke.mjs",
-    "size": "node scripts/size.mjs"
+    "size": "node scripts/size.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "22.15.30",
@@ -36,5 +38,24 @@
     "playwright-core": "1.55.0",
     "typescript": "5.8.3",
     "vitest": "3.2.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arshad-shah/qpdf-wasm.git"
+  },
+  "homepage": "https://github.com/arshad-shah/qpdf-wasm#readme",
+  "bugs": {
+    "url": "https://github.com/arshad-shah/qpdf-wasm/issues"
+  },
+  "author": "Arshad Shah",
+  "keywords": [
+    "qpdf",
+    "pdf",
+    "wasm",
+    "webassembly",
+    "encryption",
+    "aes-256",
+    "optimize"
+  ],
+  "sideEffects": false
 }

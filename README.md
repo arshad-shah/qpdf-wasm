@@ -68,26 +68,38 @@ worker.postMessage(bytes, [bytes]);
 Alternatively, copy `dist/qpdf.wasm` to your public directory and call
 `configure({ wasmUrl: new URL('/qpdf.wasm', location.origin) })`.
 `configure({ locateFile: (name, prefix) => ... })` supports custom asset routing.
+Vite may show a harmless "module externalized" warning for the Node-only
+`node:fs/promises` loader. Browsers use fetch instead.
 Node defaults to the wasm adjacent to the generated ES module.
 
 ## API
 
 - `run(args, files, runtimeOptions?)` creates a fresh module/MEMFS per call and
-  returns `{ exitCode, stdout, stderr, files }`. It preserves qpdf exit codes;
+  returns `{ exitCode, stdout, stderr, files }`. Stdout is captured as text; binary
+  stdout (for example output to `-`) is unsupported. Write to a MEMFS file instead.
+  It preserves qpdf exit codes;
   callers of this low-level API decide which codes to accept. Input and returned
   paths are relative to `/work`; nested paths are supported. Standard filesystem
   paths in arguments refer to MEMFS, not the host filesystem.
 - `optimize(bytes, options?)`, `encrypt(bytes, options)`, and
   `decrypt(bytes, password)` return `{ bytes, warnings, stdout, stderr }`.
-- `inspect(bytes, password?)` returns `{ encrypted, pdfVersion, pageCount,
-  warnings, stdout, stderr }`. Encrypted files that need a password cannot expose
-  their page metadata without it; an omitted or incorrect password throws.
+- `inspect(bytes, password?)` returns `{ encrypted, needsPassword, pdfVersion, pageCount,
+  warnings, stdout, stderr }`. Without a required user password it returns
+  `encrypted: true`, `needsPassword: true`, the PDF header version, and `pageCount: null`.
+  Owner-only encryption needs no password to read pages. A supplied wrong password
+  throws `WRONG_PASSWORD`.
 - `check(bytes, password?)` returns `{ warnings, stdout, stderr }` after qpdf's
   structural check. This checks PDF structure; it does not render pages.
 - `QpdfError` exposes `code`, `exitCode`, and the complete CLI `result`.
+  Errors retain original loader, filesystem, and JSON failures in `cause`.
+  Invalid encryption arguments reject with `INVALID_ARGUMENT`.
+  `warnings` is a `string[]`, one entry per non-empty stderr line on exit 3.
   Helpers accept exit 0 and exit 3 (warnings); exit 2 throws `QPDF_ERROR`, or
   `WRONG_PASSWORD` when qpdf reports an invalid password. Loader/runtime failures
   use `WASM_ERROR`. Raw stdout/stderr are available for diagnosis.
+
+For encrypted input, pass `optimize(bytes, { password })` or `check(bytes, password)`,
+or decrypt the input first.
 
 Optimisation changes PDF structure and compresses streams without image
 downsampling or lossy image recompression. qpdf drops unreachable objects by
@@ -101,6 +113,11 @@ Encryption requires a nonempty owner password. Permission fields include
 use qpdf defaults. Granular flags follow the overall `modify` flag and can
 override it. Reader software enforces PDF permissions.
 
+Simple boolean permission intents map to `print: allowed ? 'full' : 'none'`
+and `modify: allowed ? 'all' : 'none'`; `extract`, `annotate`, `form`, and
+`assemble` accept their boolean intents directly.
+
+The compiled WebAssembly.Module is cached once per resolved wasm URL.
 Every call instantiates wasm, which provides filesystem isolation but has
 startup and memory costs. No pthreads or SharedArrayBuffer are required.
 Passwords remain in the worker/module memory for the lifetime of the call;
@@ -162,5 +179,6 @@ Its browser profile and temporary files stay in `.toolchain/`.
 
 CI builds and tests on Linux and reports raw/gzip sizes. The tag publishing
 workflow checks that `v<version>` matches package.json, then builds, tests, and
-publishes with npm provenance. It requires an npm token with access to this
-scope in the `npm` GitHub environment. Nothing is published by local builds.
+publishes with npm provenance. It uses npm trusted publishing through OIDC (npm >=11.5.1), without an npm token.
+The owner publishes 0.1.0 manually first, then configures the trusted publisher
+on npmjs.com for this workflow and the `npm` GitHub environment. Nothing is published by local builds.

@@ -15,6 +15,8 @@ self.onmessage = async ({ data }) => {
   try {
     const input = new Uint8Array(data);
     const secured = await encrypt(input, { userPassword: 'user', ownerPassword: 'owner' });
+    const locked = await inspect(secured.bytes);
+    if (!locked.needsPassword || locked.pageCount !== null) throw new Error('Incorrect locked inspection');
     const encrypted = await inspect(secured.bytes, 'user');
     const plain = await decrypt(secured.bytes, 'user');
     const inspected = await inspect(plain.bytes);

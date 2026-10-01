@@ -13,10 +13,22 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - uses: actions/cache@v4
+        with:
+          path: .toolchain/emsdk
+          key: emsdk-${{ runner.os }}-e566f7bdcc7735f44037911c24b87a58a3c93145-4.0.10
+      - uses: actions/cache@v4
+        with:
+          path: vendor/*.tar.gz
+          key: vendor-${{ hashFiles('sources.lock.json') }}
       - run: bash scripts/bootstrap.sh
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
+      - run: pnpm typecheck
+      - run: pnpm test:browser
+        env:
+          BROWSER_EXECUTABLE: /usr/bin/google-chrome
       - run: pnpm size | tee -a "$GITHUB_STEP_SUMMARY"
       - run: pnpm pack
       - uses: actions/upload-artifact@v4

@@ -14,6 +14,7 @@ export default function createQpdf(options: {
   thisProgram: string;
   noInitialRun: boolean;
   locateFile?: (path: string, prefix: string) => string;
+  instantiateWasm?: (imports: WebAssembly.Imports, receive: (instance: WebAssembly.Instance, module: WebAssembly.Module) => void) => WebAssembly.Exports;
   print: (line: string) => void;
   printErr: (line: string) => void;
 }): Promise<QpdfModule>;
