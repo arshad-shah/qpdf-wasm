@@ -1,0 +1,25 @@
+name: CI
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - run: bash scripts/bootstrap.sh
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm size | tee -a "$GITHUB_STEP_SUMMARY"
+      - run: pnpm pack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: '*.tgz'

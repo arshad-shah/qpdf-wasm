@@ -1,0 +1,31 @@
+name: Publish
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+      - run: node -e "if(process.env.GITHUB_REF_NAME !== 'v'+JSON.parse(require('fs').readFileSync('package.json')).version) process.exit(1)"
+      - run: sudo apt-get update && sudo apt-get install -y cmake ninja-build
+      - run: bash scripts/bootstrap.sh
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test
+      - run: pnpm size
+      - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

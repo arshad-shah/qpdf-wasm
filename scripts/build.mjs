@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdir, copyFile } from 'node:fs/promises';
+import { mkdir, copyFile, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import './sources.mjs';
 const root = resolve('.');
@@ -8,7 +8,7 @@ const sdk = resolve('.toolchain/emsdk');
 const cmake = win ? resolve('.toolchain/cmake-3.31.6-windows-x86_64/bin/cmake.exe') : 'cmake';
 const ninja = win ? resolve('.toolchain/ninja/ninja.exe') : 'ninja';
 const python = win ? resolve('.toolchain/emsdk/python/3.13.3_64bit/python.exe') : 'python3';
-const env = { ...process.env, EMSDK: sdk, EM_CONFIG: `${sdk}/.emscripten`, EM_CACHE: `${sdk}/upstream/emscripten/cache` };
+const env = { ...process.env, EMSDK: sdk, EMSDK_PYTHON: python, EM_CONFIG: `${sdk}/.emscripten`, EM_CACHE: `${sdk}/upstream/emscripten/cache`, PATH: `${win ? resolve('.toolchain/emsdk/python/3.13.3_64bit') + ';' : ''}${process.env.PATH}` };
 function run(command, args) {
   const result = spawnSync(command, args, { stdio: 'inherit', env });
   if (result.error) throw result.error;
@@ -16,6 +16,9 @@ function run(command, args) {
 }
 const prefix = resolve('vendor/install').replaceAll('\\', '/');
 const toolchain = `${sdk}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake`.replaceAll('\\', '/');
+// Emscripten treats SHARED as STATIC; avoid zlib's two targets producing libz.a.
+const zlibCmake = 'vendor/zlib-1.3.1/CMakeLists.txt';
+await writeFile(zlibCmake, (await readFile(zlibCmake, 'utf8')).replace('set_target_properties(zlib zlibstatic PROPERTIES OUTPUT_NAME z)', 'set_target_properties(zlibstatic PROPERTIES OUTPUT_NAME z)\n   set_target_properties(zlib PROPERTIES OUTPUT_NAME z-unused)'));
 function configure(name, source, options) {
   run(cmake, ['-S', source, '-B', `vendor/build-${name}`, '-G', 'Ninja', `-DCMAKE_MAKE_PROGRAM=${ninja}`, `-DCMAKE_TOOLCHAIN_FILE=${toolchain}`, `-DCMAKE_INSTALL_PREFIX=${prefix}`, '-DCMAKE_BUILD_TYPE=Release', ...options]);
 }
