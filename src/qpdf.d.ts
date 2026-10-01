@@ -11,6 +11,7 @@ export interface QpdfModule {
   callMain(args: string[]): number;
 }
 export default function createQpdf(options: {
+  thisProgram: string;
   noInitialRun: boolean;
   locateFile?: (path: string, prefix: string) => string;
   print: (line: string) => void;

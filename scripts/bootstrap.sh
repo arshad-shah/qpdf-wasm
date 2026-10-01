@@ -2,6 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .toolchain
+mkdir -p .toolchain/tmp
+export TMPDIR="$PWD/.toolchain/tmp"
 if [ ! -d .toolchain/emsdk/.git ]; then
   git clone https://github.com/emscripten-core/emsdk.git .toolchain/emsdk
 fi

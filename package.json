@@ -5,9 +5,36 @@
   "license": "MIT",
   "description": "qpdf compiled to WebAssembly with a typed browser and Node API",
   "packageManager": "pnpm@10.11.0",
-  "engines": {"node": ">=20"},
-  "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}, "./qpdf.wasm": "./dist/qpdf.wasm"},
-  "files": ["dist", "LICENSE", "THIRD_PARTY_LICENSES", "README.md"],
-  "scripts": {"sources": "node scripts/sources.mjs", "build:wasm": "node scripts/build.mjs", "build:ts": "tsc", "build": "pnpm build:wasm && pnpm build:ts", "test": "vitest run", "size": "node scripts/size.mjs"},
-  "devDependencies": {"typescript": "5.8.3", "vitest": "3.2.4", "pdf-lib": "1.17.1", "@types/node": "22.15.30"}
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./qpdf.wasm": "./dist/qpdf.wasm"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "THIRD_PARTY_LICENSES",
+    "README.md"
+  ],
+  "scripts": {
+    "sources": "node scripts/sources.mjs",
+    "build:wasm": "node scripts/build.mjs",
+    "build:ts": "tsc",
+    "build": "pnpm build:wasm && pnpm build:ts",
+    "test": "vitest run",
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "size": "node scripts/size.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "pdf-lib": "1.17.1",
+    "playwright-core": "1.55.0",
+    "typescript": "5.8.3",
+    "vitest": "3.2.4"
+  }
 }

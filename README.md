@@ -146,6 +146,20 @@ static archive under Emscripten; no compression or crypto implementation is
 replaced. Outputs are `dist/qpdf.js` and `dist/qpdf.wasm`.
 `pnpm build:ts` emits the wrapper and type declarations.
 
+Node integration tests generate PDFs in memory and exercise the actual wasm,
+including AES-256 R6 permissions, content-preserving decryption, wrong passwords,
+size reduction, structural checks, warning exit codes, and isolated filesystems.
+For an additional browser worker test with an installed Chrome/Edge executable:
+
+```powershell
+$env:BROWSER_EXECUTABLE = 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+pnpm.cmd test:browser
+```
+
+The smoke test serves the ES modules and wasm on localhost and verifies secure
+encryption, decryption, inspection, linearization, and checks in a module worker.
+Its browser profile and temporary files stay in `.toolchain/`.
+
 CI builds and tests on Linux and reports raw/gzip sizes. The tag publishing
 workflow checks that `v<version>` matches package.json, then builds, tests, and
 publishes with npm provenance. It requires an npm token with access to this

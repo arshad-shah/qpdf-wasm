@@ -33,7 +33,7 @@ export async function run(args: string[], files: Record<string, Uint8Array>, opt
   const stdout: string[] = [], stderr: string[] = [];
   const locateFile = options.locateFile ?? (options.wasmUrl ? (path: string, prefix: string) => path.endsWith('.wasm') ? String(options.wasmUrl) : prefix + path : undefined);
   let module;
-  try { module = await createQpdf({ noInitialRun: true, locateFile, print: line => stdout.push(line), printErr: line => stderr.push(line) }); }
+  try { module = await createQpdf({ thisProgram: 'qpdf', noInitialRun: true, locateFile, print: line => stdout.push(line), printErr: line => stderr.push(line) }); }
   catch (cause) { throw new QpdfError('WASM_ERROR', `Unable to initialize qpdf: ${String(cause)}`); }
   module.FS.mkdirTree('/work');
   module.FS.chdir('/work');

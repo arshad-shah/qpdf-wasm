@@ -1,17 +1,23 @@
 $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path $PSScriptRoot -Parent)
 New-Item -ItemType Directory -Force .toolchain | Out-Null
-function Download($Url, $Path) {
+New-Item -ItemType Directory -Force .toolchain/tmp | Out-Null
+$env:TEMP = (Resolve-Path .toolchain/tmp).Path
+$env:TMP = $env:TEMP
+function Download($Url, $Path, $Sha256) {
   if (!(Test-Path $Path)) {
     & curl.exe -fL --retry 3 $Url -o $Path
     if ($LASTEXITCODE -ne 0) { throw "Download failed: $Url" }
   }
+  if ((Get-FileHash -Algorithm SHA256 $Path).Hash.ToLowerInvariant() -ne $Sha256) {
+    throw "SHA256 mismatch: $Path"
+  }
 }
-Download 'https://www.python.org/ftp/python/3.13.3/python-3.13.3-embed-amd64.zip' '.toolchain/python.zip'
+Download 'https://www.python.org/ftp/python/3.13.3/python-3.13.3-embed-amd64.zip' '.toolchain/python.zip' '59ff76e16e6597de47474fb22be69e7191a89116910d728ab735079b078e52db'
 Expand-Archive .toolchain/python.zip .toolchain/python -Force
-Download 'https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-windows-x86_64.zip' '.toolchain/cmake.zip'
+Download 'https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-windows-x86_64.zip' '.toolchain/cmake.zip' 'd163cd3ab4959b0a53fa8988f2ddbd2e6c501658201e6a154386bad9dbe4f836'
 Expand-Archive .toolchain/cmake.zip .toolchain -Force
-Download 'https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip' '.toolchain/ninja.zip'
+Download 'https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip' '.toolchain/ninja.zip' 'f550fec705b6d6ff58f2db3c374c2277a37691678d6aba463adcbb129108467a'
 Expand-Archive .toolchain/ninja.zip .toolchain/ninja -Force
 if (!(Test-Path .toolchain/emsdk/.git)) {
   git clone https://github.com/emscripten-core/emsdk.git .toolchain/emsdk
